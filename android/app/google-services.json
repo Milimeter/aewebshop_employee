@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "419380266363",
+    "project_id": "ae-dijelovi-d060e",
+    "storage_bucket": "ae-dijelovi-d060e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:419380266363:android:67dab69f8615934ebc29de",
+        "android_client_info": {
+          "package_name": "com.example.aecompanyapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "419380266363-686svi9spme49kd7uf3qk7oni0lpr1ei.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARZ1_GAkMmvSc9Y3xgd06IF_vp5hQiwxA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "419380266363-686svi9spme49kd7uf3qk7oni0lpr1ei.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

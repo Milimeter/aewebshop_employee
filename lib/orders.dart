@@ -39,14 +39,14 @@ class HandleOrders extends StatelessWidget {
                     itemBuilder: (context, index) {
                       print(snapshot.data.docs[index].data());
                       print("===========================");
-                      print(snapshot.data.docs[index].data()["itemsInfo"]);
+                      print(snapshot.data.docs[index].get("itemsInfo"));
 
                       return orderThread(
-                        status: snapshot.data.docs[index].data()["status"],
-                        itemsInfo:
-                            snapshot.data.docs[index].data()["itemsInfo"],
-                        price: snapshot.data.docs[index].data()["price"],
-                        orderId: snapshot.data.docs[index].data()["orderId"],
+                        status: snapshot.data.docs[index].get("status"),
+                        itemsInfo: snapshot.data.docs[index].get("itemsInfo"),
+                        price: snapshot.data.docs[index].get("price") ??
+                            "Click to send price to user",
+                        orderId: snapshot.data.docs[index].get("orderId"),
                       );
                     },
                   );
@@ -94,7 +94,6 @@ class HandleOrders extends StatelessWidget {
                                 border: OutlineInputBorder(
                                     borderSide:
                                         BorderSide(color: Colors.orange))),
-                            
                           ),
                         ),
                         IconButton(

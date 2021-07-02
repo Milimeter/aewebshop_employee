@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
 import 'dart:core';
 import 'package:aewebshop/orders.dart';
+import 'package:algolia/algolia.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:page_transition/page_transition.dart';
 /*
 import 'package:paginate_firestore/bloc/pagination_listeners.dart';
@@ -25,13 +25,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  SystemChrome.setSystemUIOverlayStyle(
+       SystemUiOverlayStyle.light.copyWith(
+         statusBarColor: Colors.red[800],
+         statusBarBrightness: Brightness.light,
+         statusBarIconBrightness: Brightness.light,
+      ));
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
+    return MaterialApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -124,53 +130,68 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          new Image.asset('assets/img/aelogo.png', height: 180, width: 180),
-          SizedBox(height: 100),
-          RaisedButton(
-            child: Text("Unos novog artikla",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15)),
-            onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => ImageUpload()));
-            },
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-                side: BorderSide(color: Colors.red[800])),
-            elevation: 5.0,
-            color: Colors.red[800],
-            textColor: Colors.white,
-            padding: EdgeInsets.fromLTRB(15, 15, 15, 15),
-            splashColor: Colors.grey,
-          ),
-          SizedBox(height: 20.0),
-          RaisedButton(
-            child: Text("Pregled svih artikala",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15)),
-            onPressed: () async {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => PregledArtikala()));
-            },
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-                side: BorderSide(color: Colors.red[800])),
-            elevation: 5.0,
-            color: Colors.red[800],
-            textColor: Colors.white,
-            padding: EdgeInsets.fromLTRB(15, 15, 15, 15),
-            splashColor: Colors.grey,
+    return Scaffold(
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            onPressed: () => Get.to(HandleOrders()),
+            icon: Icon(
+              Icons.notification_add,
+              color: Colors.black,
+            ),
           ),
         ],
+      ),
+      body: Container(
+        color: Colors.white,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            new Image.asset('assets/img/aelogo.png', height: 180, width: 180),
+            SizedBox(height: 100),
+            // ignore: deprecated_member_use
+            RaisedButton(
+              child: Text("Unos novog artikla",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15)),
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => ImageUpload()));
+              },
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  side: BorderSide(color: Colors.red[800])),
+              elevation: 5.0,
+              color: Colors.red[800],
+              textColor: Colors.white,
+              padding: EdgeInsets.fromLTRB(15, 15, 15, 15),
+              splashColor: Colors.grey,
+            ),
+            SizedBox(height: 20.0),
+            // ignore: deprecated_member_use
+            RaisedButton(
+              child: Text("Pregled svih artikala",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15)),
+              onPressed: () async {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => PregledArtikala()));
+              },
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  side: BorderSide(color: Colors.red[800])),
+              elevation: 5.0,
+              color: Colors.red[800],
+              textColor: Colors.white,
+              padding: EdgeInsets.fromLTRB(15, 15, 15, 15),
+              splashColor: Colors.grey,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -221,9 +242,6 @@ class _ImageUploadState extends State<ImageUpload> {
           'Unos novog artikla',
           style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
         ),
-        centerTitle: true,
-        elevation: 0.0,
-        backgroundColor: Colors.white,
         actions: [
           IconButton(
             onPressed: () => Get.to(HandleOrders()),
@@ -233,6 +251,9 @@ class _ImageUploadState extends State<ImageUpload> {
             ),
           ),
         ],
+        centerTitle: true,
+        elevation: 0.0,
+        backgroundColor: Colors.white,
       ),
       body: Container(
         color: Colors.white,
@@ -1133,6 +1154,10 @@ class _PregledArtikalaState extends State<PregledArtikala> {
 
   List<DocumentSnapshot> products = []; // stores fetched products
 
+  List<AlgoliaObjectSnapshot> algoliaObjects = [];
+
+  int _currentPage = 0;
+
   bool isLoading = false; // track if products fetching
 
   bool hasMore = true; // flag for more products available or not
@@ -1154,8 +1179,8 @@ class _PregledArtikalaState extends State<PregledArtikala> {
     super.initState();
     //fetchData();
     //fetchDataFromFireStore();
-    getProducts(searchtextEditingController.text.trim(), 's_name', false);
-
+    // getProducts(searchtextEditingController.text.trim(), 's_name', false);
+    _search('', false);
     _scrollController.addListener(() {
       double maxScroll = _scrollController.position.maxScrollExtent;
       double currentScroll = _scrollController.position.pixels;
@@ -1170,195 +1195,235 @@ class _PregledArtikalaState extends State<PregledArtikala> {
           searchBy = "s_brand";
         }
         addedLastDoc = false;
-        getProducts(searchtextEditingController.text.trim(), searchBy, false);
+        _searchType = searchBy;
+        _search(searchtextEditingController.text.trim(), false);
       }
     });
   }
 
-  getProducts(
-      String search_text, String search_type, bool hasSearchChanged) async {
-    print("=============================================================");
-    print("search text => " + search_text);
-    print("search type => " + search_type);
-    QuerySnapshot querySnapshot;
+  // getProducts(
+  //     String search_text, String search_type, bool hasSearchChanged) async {
+  //   print("=============================================================");
+  //   print("search text => " + search_text);
+  //   print("search type => " + search_type);
+  //   QuerySnapshot querySnapshot;
 
-    if (search_text.length == 0) {
-      if (!hasMore) {
-        print('No More Products');
-        return;
-      }
-      if (isLoading) {
-        return;
-      }
-      setState(() {
-        isLoading = true;
-      });
+  //   if (search_text.length == 0) {
+  //     if (!hasMore) {
+  //       print('No More Products');
+  //       return;
+  //     }
+  //     if (isLoading) {
+  //       return;
+  //     }
+  //     setState(() {
+  //       isLoading = true;
+  //     });
 
-      if (hasSearchChanged) {
-        products = [];
-      }
-      if (lastDocument == null) {
-        print('Initial DOC');
-        if (_chosenValue == 'All') {
-          queryInitiated = true;
-          querySnapshot = await firestore
-              .collection('artikli')
-              .orderBy('s_name')
-              .limit(documentLimit)
-              .get();
-        } else {
-          print("CHOOSEN VALUE 1 => " + _chosenValue);
-          queryInitiated = true;
-          querySnapshot = await firestore
-              .collection('artikli')
-              .where('k', isEqualTo: _chosenValue)
-              .orderBy('s_name')
-              .limit(documentLimit)
-              .get();
-        }
-      } else {
-        print('Pagination DOC');
-        if (_chosenValue == 'All') {
-          queryInitiated = true;
-          querySnapshot = await firestore
-              .collection('artikli')
-              .orderBy('s_name')
-              .limit(documentLimit)
-              .startAfterDocument(lastDocument)
-              .get();
-        } else {
-          print("CHOOSEN VALUE 2 => " + _chosenValue);
-          queryInitiated = true;
-          querySnapshot = await firestore
-              .collection('artikli')
-              .where('k', isEqualTo: _chosenValue)
-              .orderBy('s_name')
-              .limit(documentLimit)
-              .startAfterDocument(lastDocument)
-              .get();
-        }
-      }
-    } else {
-      if (hasSearchChanged) {
-        lastDocument = null;
-        products = [];
-      } else {
-        setState(() {
-          isLoading = true;
-        });
-      }
-      if (lastDocument == null) {
-        print('SEARCH: Initial DOC');
-        if (_chosenValue == 'All') {
-          queryInitiated = true;
-          querySnapshot = await firestore
-              .collection('artikli')
-              .where(search_type,
-                  isGreaterThanOrEqualTo: search_text.toLowerCase())
-              .where(search_type,
-                  isLessThanOrEqualTo: search_text.toLowerCase() + 'z')
-              .orderBy(search_type)
-              .limit(documentLimit)
-              .get();
-        } else {
-          print("CHOOSEN VALUE 3 => " + _chosenValue);
-          queryInitiated = true;
-          querySnapshot = await firestore
-              .collection('artikli')
-              .where(search_type,
-                  isGreaterThanOrEqualTo: search_text.toLowerCase())
-              .where(search_type,
-                  isLessThanOrEqualTo: search_text.toLowerCase() + 'z')
-              .where('k', isEqualTo: _chosenValue)
-              .orderBy(search_type)
-              .limit(documentLimit)
-              .get();
-        }
-      } else {
-        print('SEARCH: Pagination DOC');
-        if (_chosenValue == 'All') {
-          queryInitiated = true;
-          querySnapshot = await firestore
-              .collection('artikli')
-              .where(search_type,
-                  isGreaterThanOrEqualTo: search_text.toLowerCase())
-              .where(search_type,
-                  isLessThanOrEqualTo: search_text.toLowerCase() + 'z')
-              .orderBy(search_type)
-              .limit(documentLimit)
-              .startAfterDocument(lastDocument)
-              .get();
-        } else {
-          print("CHOOSEN VALUE 4 => " + _chosenValue);
-          queryInitiated = true;
-          querySnapshot = await firestore
-              .collection('artikli')
-              .where(search_type,
-                  isGreaterThanOrEqualTo: search_text.toLowerCase())
-              .where(search_type,
-                  isLessThanOrEqualTo: search_text.toLowerCase() + 'z')
-              .where('k', isEqualTo: _chosenValue)
-              .orderBy(search_type)
-              .limit(documentLimit)
-              .startAfterDocument(lastDocument)
-              .get();
-        }
-      }
-    }
+  //     if (hasSearchChanged) {
+  //       products = [];
+  //     }
+  //     if (lastDocument == null) {
+  //       print('Initial DOC');
+  //       if (_chosenValue == 'All') {
+  //         queryInitiated = true;
+  //         querySnapshot = await firestore
+  //             .collection('artikli')
+  //             .orderBy('s_name')
+  //             .limit(documentLimit)
+  //             .get();
+  //       } else {
+  //         print("CHOOSEN VALUE 1 => " + _chosenValue);
+  //         queryInitiated = true;
+  //         querySnapshot = await firestore
+  //             .collection('artikli')
+  //             .where('k', isEqualTo: _chosenValue)
+  //             .orderBy('s_name')
+  //             .limit(documentLimit)
+  //             .get();
+  //       }
+  //     } else {
+  //       print('Pagination DOC');
+  //       if (_chosenValue == 'All') {
+  //         queryInitiated = true;
+  //         querySnapshot = await firestore
+  //             .collection('artikli')
+  //             .orderBy('s_name')
+  //             .limit(documentLimit)
+  //             .startAfterDocument(lastDocument)
+  //             .get();
+  //       } else {
+  //         print("CHOOSEN VALUE 2 => " + _chosenValue);
+  //         queryInitiated = true;
+  //         querySnapshot = await firestore
+  //             .collection('artikli')
+  //             .where('k', isEqualTo: _chosenValue)
+  //             .orderBy('s_name')
+  //             .limit(documentLimit)
+  //             .startAfterDocument(lastDocument)
+  //             .get();
+  //       }
+  //     }
+  //   } else {
+  //     if (hasSearchChanged) {
+  //       lastDocument = null;
+  //       products = [];
+  //     } else {
+  //       setState(() {
+  //         isLoading = true;
+  //       });
+  //     }
+  //     if (lastDocument == null) {
+  //       print('SEARCH: Initial DOC');
+  //       if (_chosenValue == 'All') {
+  //         queryInitiated = true;
+  //         querySnapshot = await firestore
+  //             .collection('artikli')
+  //             .where(search_type,
+  //                 isGreaterThanOrEqualTo: search_text.toLowerCase())
+  //             .where(search_type,
+  //                 isLessThanOrEqualTo: search_text.toLowerCase() + 'z')
+  //             .orderBy(search_type)
+  //             .limit(documentLimit)
+  //             .get();
+  //       } else {
+  //         print("CHOOSEN VALUE 3 => " + _chosenValue);
+  //         queryInitiated = true;
+  //         querySnapshot = await firestore
+  //             .collection('artikli')
+  //             .where(search_type,
+  //                 isGreaterThanOrEqualTo: search_text.toLowerCase())
+  //             .where(search_type,
+  //                 isLessThanOrEqualTo: search_text.toLowerCase() + 'z')
+  //             .where('k', isEqualTo: _chosenValue)
+  //             .orderBy(search_type)
+  //             .limit(documentLimit)
+  //             .get();
+  //       }
+  //     } else {
+  //       print('SEARCH: Pagination DOC');
+  //       if (_chosenValue == 'All') {
+  //         queryInitiated = true;
+  //         querySnapshot = await firestore
+  //             .collection('artikli')
+  //             .where(search_type,
+  //                 isGreaterThanOrEqualTo: search_text.toLowerCase())
+  //             .where(search_type,
+  //                 isLessThanOrEqualTo: search_text.toLowerCase() + 'z')
+  //             .orderBy(search_type)
+  //             .limit(documentLimit)
+  //             .startAfterDocument(lastDocument)
+  //             .get();
+  //       } else {
+  //         print("CHOOSEN VALUE 4 => " + _chosenValue);
+  //         queryInitiated = true;
+  //         querySnapshot = await firestore
+  //             .collection('artikli')
+  //             .where(search_type,
+  //                 isGreaterThanOrEqualTo: search_text.toLowerCase())
+  //             .where(search_type,
+  //                 isLessThanOrEqualTo: search_text.toLowerCase() + 'z')
+  //             .where('k', isEqualTo: _chosenValue)
+  //             .orderBy(search_type)
+  //             .limit(documentLimit)
+  //             .startAfterDocument(lastDocument)
+  //             .get();
+  //       }
+  //     }
+  //   }
 
-    /*if (lastDocument == null) {
-      print('Initial DOC');
-      querySnapshot = await firestore
-          .collection('artikli')
-          //.where(search_type, isGreaterThanOrEqualTo: search_text).where(search_type, isLessThanOrEqualTo: search_text+'z')
-          .orderBy(search_type)
-          .limit(documentLimit)
-          .get();
-    } else {
-      print('Pagination DOC');
-      querySnapshot = await firestore
-          .collection('artikli').where(search_type, isGreaterThanOrEqualTo: search_text).where(search_type, isLessThanOrEqualTo: search_text+'z')
-          .orderBy(search_type)
-          .limit(documentLimit)
-          .startAfterDocument(lastDocument)
-          .get();
-    }*/
-    var articleArray = querySnapshot.docs;
-    if (articleArray.length < documentLimit) {
-      hasMore = false;
-      //lastDocument = null;
-    }
-    if (articleArray.length > 0 && !addedLastDoc) {
-      print("Added LAST DOCUMENT");
-      addedLastDoc = true;
-      lastDocument = articleArray[articleArray.length - 1];
+  //   /*if (lastDocument == null) {
+  //     print('Initial DOC');
+  //     querySnapshot = await firestore
+  //         .collection('artikli')
+  //         //.where(search_type, isGreaterThanOrEqualTo: search_text).where(search_type, isLessThanOrEqualTo: search_text+'z')
+  //         .orderBy(search_type)
+  //         .limit(documentLimit)
+  //         .get();
+  //   } else {
+  //     print('Pagination DOC');
+  //     querySnapshot = await firestore
+  //         .collection('artikli').where(search_type, isGreaterThanOrEqualTo: search_text).where(search_type, isLessThanOrEqualTo: search_text+'z')
+  //         .orderBy(search_type)
+  //         .limit(documentLimit)
+  //         .startAfterDocument(lastDocument)
+  //         .get();
+  //   }*/
+  //   var articleArray = querySnapshot.docs;
+  //   if (articleArray.length < documentLimit) {
+  //     hasMore = false;
+  //     //lastDocument = null;
+  //   }
+  //   if (articleArray.length > 0 && !addedLastDoc) {
+  //     print("Added LAST DOCUMENT");
+  //     addedLastDoc = true;
+  //     lastDocument = articleArray[articleArray.length - 1];
 
-      if (queryInitiated) {
-        print("Adding All ITEM ==> BEFORE :" + products.length.toString());
-        products.addAll(articleArray);
-        print("AFTER :" + products.length.toString());
-        queryInitiated = false;
-      }
-    }
+  //     if (queryInitiated) {
+  //       print("Adding All ITEM ==> BEFORE :" + products.length.toString());
+  //       products.addAll(articleArray);
+  //       print("AFTER :" + products.length.toString());
+  //       queryInitiated = false;
+  //     }
+  //   }
 
-    if (products.length == 0 && queryInitiated) {
-      print("Adding All ITEM ==> BEFORE :" + products.length.toString());
-      products.addAll(articleArray);
-      print("AFTER :" + products.length.toString());
+  //   if (products.length == 0 && queryInitiated) {
+  //     print("Adding All ITEM ==> BEFORE :" + products.length.toString());
+  //     products.addAll(articleArray);
+  //     print("AFTER :" + products.length.toString());
 
-      print("Added LAST DOCUMENT");
-      addedLastDoc = true;
-      lastDocument = articleArray[articleArray.length - 1];
+  //     print("Added LAST DOCUMENT");
+  //     addedLastDoc = true;
+  //     lastDocument = articleArray[articleArray.length - 1];
 
-      queryInitiated = false;
-    }
+  //     queryInitiated = false;
+  //   }
 
-    setState(() {
-      isLoading = false;
-    });
-  }
+  //   setState(() {
+  //     isLoading = false;
+  //   });
+  // }
 
   String _chosenValue = 'All';
+  String _searchType = 's_name';
+
+  _search(String searchText, bool hasSearchChanged) async {
+    print("=============================================================");
+    print("search text => " + searchText);
+    print("search type => " + _searchType);
+    print("search facet => " + _chosenValue);
+    if (hasSearchChanged) {
+      algoliaObjects = [];
+      _currentPage = 0;
+    }
+    Algolia algolia = Algolia.init(
+      applicationId: 'BEC9YCR77A',
+      apiKey: 'a49b2ed8678f29432c3296fa360b47e1',
+    );
+
+    AlgoliaQuery query = algolia.instance
+        .index('artikli')
+        .setHitsPerPage(100)
+        .query(searchText)
+        .setPage(_currentPage)
+        .setRestrictSearchableAttributes([_searchType]).facetFilter(
+            _chosenValue == 'All' ? '' : ['k:$_chosenValue']);
+    try {
+      final results = await query.getObjects();
+      final hits = results.hits;
+      setState(() {
+        algoliaObjects.addAll(hits);
+      });
+      print(
+          'data: ${results.nbHits} ${results.nbPages} ${hits.length} ${results.facets} ${results.facetsStats}');
+      _currentPage++;
+      if (_currentPage == results.nbPages) {
+        hasMore = false;
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
 
   @override
   void dispose() {
@@ -1384,9 +1449,12 @@ class _PregledArtikalaState extends State<PregledArtikala> {
         searchBy = "s_brand";
       }
     }
-    products = [];
+    // products = [];
+    algoliaObjects = [];
     addedLastDoc = true;
-    getProducts(value, searchBy, true);
+    _searchType = searchBy;
+    // getProducts(value, searchBy, true);
+    _search(value, true);
   }
 
   @override
@@ -1569,7 +1637,8 @@ class _PregledArtikalaState extends State<PregledArtikala> {
                         _chosenValue = value;
                         print(_chosenValue);
                         addedLastDoc = true;
-                        getProducts("", "", true);
+                        _search(searchtextEditingController.text, true);
+                        // getProducts("", "", true);
                       });
                     },
                   ),
@@ -1686,154 +1755,9 @@ class _PregledArtikalaState extends State<PregledArtikala> {
           ),
           SizedBox(height: 10),
           Expanded(
-            child: //RefreshIndicator ( child:
-                /*PaginateFirestore(
-            //item builder type is compulsory.
-            itemBuilderType: PaginateBuilderType.gridView, //Change types accordingly
-            itemBuilder: (index, context, documentSnapshot) */ /*=> ListTile(
-          leading: CircleAvatar(child: Icon(Icons.person)),
-          title: Text("${documentSnapshot.id}"),
-          subtitle: Text(documentSnapshot.id),
-        )*/ /*{
-              String title = "ABCD";
-              String Sub_title = "ABCD";
-              String image_url = "";
-              if(documentSnapshot is DocumentSnapshot){
-                title = documentSnapshot.get("n");
-                Sub_title = documentSnapshot.get("m");
-
-                List<String> array_list = List.from(documentSnapshot.get("u"));
-                if (array_list != null && array_list.length > 0){
-                  image_url = array_list[0];
-                } else {
-                }
-              }
-              return InkWell(
-                child: Container(
-                  margin: EdgeInsets.all(10),
-                  alignment: Alignment.center,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(height : 10),
-                      Container(height: 50, child:
-                      CachedNetworkImage(
-                        imageUrl: image_url,
-                        progressIndicatorBuilder: (context, url, downloadProgress) =>
-                            SpinKitFadingCircle(
-                              color: Colors.red,
-                              size: 20,
-                            ),
-                        //placeholder: (context, url) => CircularProgressIndicator(),
-                        errorWidget: (context, url, error) => Icon(Icons.error),
-                      ),),
-                      // FadeInImage(
-                      //   placeholder: AssetImage("assets/img/car.png"),
-                      //   image: NetworkImage(image_url),
-                      //   fit: BoxFit.cover,
-                      // ),),
-                      SizedBox(height : 10),
-                      // Text("${image_url}",
-                      //   textAlign: TextAlign.center,
-                      //   style: TextStyle(
-                      //     color : Colors.black,
-                      //     fontWeight: FontWeight.bold,
-                      //     fontSize: 17.0,
-                      //   ),),
-                      Text("${title}",
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        style: TextStyle(
-                          color : Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 17.0,
-                        ),),
-                      SizedBox(height : 5),
-                      Text("${Sub_title}",style: TextStyle(color : Colors.black, fontWeight : FontWeight.bold),)
-                    ],
-                  ),
-                  decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(15)),
-                ),
-                onTap: (){
-                  print("Item Tapped $index");
-                  String allDetails = "Part Name: " + documentSnapshot.get("n") + "\nm: " + documentSnapshot.get("m")
-                      + "\nCar Brand: " + documentSnapshot.get("m0") + "\nCatalogue Number: " + documentSnapshot.get("kb").toString()
-                      + "\nb: " + documentSnapshot.get("b").toString() + "\nc: " + documentSnapshot.get("c").toString()
-                      + "\ni: " + documentSnapshot.get("i").toString() + "\nid: " + documentSnapshot.get("id").toString()
-                      + "\nk: " + documentSnapshot.get("k").toString() + "\nko: " + documentSnapshot.get("ko").toString()
-                      + "\nl: " + documentSnapshot.get("l").toString() + "\no: " + documentSnapshot.get("o").toString()
-                      + "\ns: " + documentSnapshot.get("s").toString() + "\nv: " + documentSnapshot.get("v").toString();
-                  showDialog<String>(
-                    context: context,
-                    builder: (BuildContext context) => AlertDialog(
-                      title: Text(title),
-                      content: Text(allDetails),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context, 'DELETE');
-                            showDialog<String>(
-                              context: context,
-                              builder: (BuildContext context) => AlertDialog(
-                                title: Text('Confirm Delete'),
-                                content: Text('Are you sure you want to delete this article?'),
-                                actions: <Widget>[
-                                  TextButton(
-                                    onPressed: () async {
-                                      Navigator.pop(context, 'Yes');
-
-                                      //Query Firestore to delete the part
-                                      print("Delete Part at $index");
-                                      await FirebaseFirestore.instance.runTransaction((transaction) async
-                                      {
-                                        DocumentReference doc = await FirebaseFirestore.instance.collection('artikli').doc(documentSnapshot.id);
-                                        transaction.delete(doc);
-                                      });
-                                    },
-                                    child: const Text('Yes'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, 'No'),
-                                    child: const Text('No'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                          child: const Text('DELETE'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, 'CLOSE'),
-                          child: const Text('CLOSE'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-            itemsPerPage: 20,
-            // orderBy is compulsory to enable pagination
-            query: FirebaseFirestore.instance
-                .collection('artikli')
-                .where("m0", isGreaterThanOrEqualTo : "au")
-                .where("m0", isLessThanOrEqualTo : "au" + '\uf8ff'),
-              */ /*isSearching ? FirebaseFirestore.instance
-                .collection('artikli')
-                .where(selectedItem == "Catalogue Number" ? "kb" : (selectedItem == "Car Brand" ? "m0" : "n"), isGreaterThanOrEqualTo: searchtext.toLowerCase())
-                .where(selectedItem == "Catalogue Number" ? "kb" : (selectedItem == "Car Brand" ? "m0" : "n"), isLessThanOrEqualTo: searchtext.toLowerCase() + '\uf8ff')
-                : FirebaseFirestore.instance.collection('artikli'),*/ /*
-            listeners: [
-              refreshChangeListener,
-            ],
-            // to fetch real-time data
-            isLive: true,
-          )*/
-                Column(children: [
+            child: Column(children: [
               Expanded(
-                  child: products.length == 0
+                  child: algoliaObjects.length == 0
                       ? Center(
                           child: isLoading
                               ? Container(
@@ -1850,13 +1774,13 @@ class _PregledArtikalaState extends State<PregledArtikala> {
                       : GridView.count(
                           controller: _scrollController,
                           crossAxisCount: 2,
-                          children: new List<Widget>.generate(products.length,
-                              (index) {
-                            String title = products[index].get("n");
-                            String Sub_title = products[index].get("m");
+                          children: new List<Widget>.generate(
+                              algoliaObjects.length, (index) {
+                            String title = algoliaObjects[index].data["n"];
+                            String Sub_title = algoliaObjects[index].data["m"];
                             String image_url = "";
                             List<String> array_list =
-                                List.from(products[index].get("u"));
+                                List.from(algoliaObjects[index].data["u"]);
                             if (array_list != null && array_list.length > 0) {
                               image_url = array_list[0];
                             }
@@ -1897,18 +1821,18 @@ class _PregledArtikalaState extends State<PregledArtikala> {
                                     //     fontSize: 17.0,
                                     //   ),),
                                     Text(
-                                      "${title}",
+                                      "$title",
                                       textAlign: TextAlign.center,
                                       maxLines: 2,
                                       style: TextStyle(
                                         color: Colors.black,
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 17.0,
+                                        fontSize: 15.0,
                                       ),
                                     ),
                                     SizedBox(height: 5),
                                     Text(
-                                      "${Sub_title}",
+                                      "$Sub_title",
                                       style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold),
@@ -1921,25 +1845,25 @@ class _PregledArtikalaState extends State<PregledArtikala> {
                               ),
                               onTap: () {
                                 String naziv =
-                                    products[index].get("n").toString();
+                                    algoliaObjects[index].data["n"].toString();
                                 String marka =
-                                    products[index].get("m").toString();
+                                    algoliaObjects[index].data["m"].toString();
                                 String model =
-                                    products[index].get("mo").toString();
+                                    algoliaObjects[index].data["mo"].toString();
                                 String katBr =
-                                    products[index].get("kb").toString();
+                                    algoliaObjects[index].data["kb"].toString();
                                 String cijena =
-                                    products[index].get("c").toString();
+                                    algoliaObjects[index].data["c"].toString();
                                 String kolicina =
-                                    products[index].get("ko").toString();
+                                    algoliaObjects[index].data["ko"].toString();
                                 String lokacija =
-                                    products[index].get("l").toString();
+                                    algoliaObjects[index].data["l"].toString();
                                 String opis =
-                                    products[index].get("o").toString();
+                                    algoliaObjects[index].data["o"].toString();
                                 String kat =
-                                    products[index].get("k").toString();
+                                    algoliaObjects[index].data["k"].toString();
                                 List<String> array_list =
-                                    List.from(products[index].get("u"));
+                                    List.from(algoliaObjects[index].data["u"]);
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -2343,7 +2267,7 @@ class _PregledArtikalaState extends State<PregledArtikala> {
                                                                                           };
                                                                                           var collection = FirebaseFirestore.instance.collection('artikli');
                                                                                           collection
-                                                                                              .doc(products[index].id) // <-- Doc ID where data should be updated.
+                                                                                              .doc(algoliaObjects[index].objectID) // <-- Doc ID where data should be updated.
                                                                                               .update(body);
 
                                                                                           try {
@@ -2436,10 +2360,10 @@ class _PregledArtikalaState extends State<PregledArtikala> {
                                                                   AlertDialog(
                                                                 title: Text(
                                                                     'Potvrda brisanja artikla'),
-                                                                content: Text(
-                                                                    'Da li želite izbrisati artikal \n' +
-                                                                        products[index]
-                                                                            .get("n")),
+                                                                content: Text('Da li želite izbrisati artikal \n' +
+                                                                    algoliaObjects[
+                                                                            index]
+                                                                        .data["n"]),
                                                                 actions: <
                                                                     Widget>[
                                                                   TextButton(
@@ -2457,14 +2381,14 @@ class _PregledArtikalaState extends State<PregledArtikala> {
                                                                         DocumentReference doc = await FirebaseFirestore
                                                                             .instance
                                                                             .collection('artikli')
-                                                                            .doc(products[index].id);
+                                                                            .doc(algoliaObjects[index].objectID);
                                                                         transaction
                                                                             .delete(doc);
                                                                         setState(
                                                                             () {
                                                                           print(
                                                                               "Deleted Part at $index");
-                                                                          products
+                                                                          algoliaObjects
                                                                               .removeAt(index);
                                                                         });
                                                                       });
